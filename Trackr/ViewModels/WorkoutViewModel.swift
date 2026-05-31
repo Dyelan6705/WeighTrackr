@@ -10,6 +10,7 @@ import SwiftData
 import SwiftUI
 import Combine
 
+@MainActor
 @Observable
 final class WorkoutViewModel {
     var workout: WorkoutSession
@@ -21,25 +22,27 @@ final class WorkoutViewModel {
     var showingFinishConfirm = false
     var selectedExercise: Exercise?
     
-    private var timer: Timer?
-    private var restTimer: Timer?
-    
+    @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var restTimer: Timer?
+
     init(workout: WorkoutSession) {
         self.workout = workout
         startTimer()
     }
-    
+
     deinit {
         timer?.invalidate()
         restTimer?.invalidate()
     }
-    
+
     // MARK: - Timer
     private func startTimer() {
         elapsedTime = Date().timeIntervalSince(workout.startDate)
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            elapsedTime = Date().timeIntervalSince(workout.startDate)
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                elapsedTime = Date().timeIntervalSince(workout.startDate)
+            }
         }
     }
     
@@ -59,12 +62,14 @@ final class WorkoutViewModel {
         isRestTimerActive = true
         
         restTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            if restTimeRemaining > 0 {
-                restTimeRemaining -= 1
-            } else {
-                stopRestTimer()
-                triggerHaptic(.success)
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if restTimeRemaining > 0 {
+                    restTimeRemaining -= 1
+                } else {
+                    stopRestTimer()
+                    triggerHaptic(.success)
+                }
             }
         }
     }
