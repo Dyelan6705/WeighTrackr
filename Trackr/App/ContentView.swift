@@ -27,7 +27,7 @@ struct ContentView: View {
                 )
                 .tag(Tab.templates)
                 
-                ProgressView()
+                TrackrProgressView()
                 .tag(Tab.progress)
                 
                 SettingsView()
