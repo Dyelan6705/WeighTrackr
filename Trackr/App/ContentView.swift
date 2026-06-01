@@ -11,30 +11,24 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .home
     @State private var activeWorkout: WorkoutSession?
     @State private var showingWorkout = false
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-                HomeView(
-                    activeWorkout: $activeWorkout,
-                    showingWorkout: $showingWorkout
-                )
-                .tag(Tab.home)
-                
-                TemplatesView(
-                    activeWorkout: $activeWorkout,
-                    showingWorkout: $showingWorkout
-                )
-                .tag(Tab.templates)
-                
+                HomeView(activeWorkout: $activeWorkout, showingWorkout: $showingWorkout)
+                    .tag(Tab.home)
+
+                TemplatesView(activeWorkout: $activeWorkout, showingWorkout: $showingWorkout)
+                    .tag(Tab.templates)
+
                 TrackrProgressView()
-                .tag(Tab.progress)
-                
+                    .tag(Tab.progress)
+
                 SettingsView()
-                .tag(Tab.settings)
+                    .tag(Tab.settings)
             }
-            .tabViewStyle(.automatic)
-            
+            .toolbar(.hidden, for: .tabBar)
+
             TrackrTabBar(selectedTab: $selectedTab)
         }
         .ignoresSafeArea(.keyboard)
@@ -50,17 +44,17 @@ struct ContentView: View {
 }
 
 enum Tab: String, CaseIterable {
-    case home = "house.fill"
+    case home      = "house.fill"
     case templates = "list.bullet.rectangle.fill"
-    case progress = "chart.line.uptrend.xyaxis"
-    case settings = "gearshape.fill"
-    
+    case progress  = "chart.line.uptrend.xyaxis"
+    case settings  = "gearshape.fill"
+
     var label: String {
         switch self {
-        case .home: return "Home"
+        case .home:      return "Home"
         case .templates: return "Templates"
-        case .progress: return "Progress"
-        case .settings: return "Settings"
+        case .progress:  return "Progress"
+        case .settings:  return "Settings"
         }
     }
 }

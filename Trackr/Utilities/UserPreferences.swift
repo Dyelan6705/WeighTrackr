@@ -11,39 +11,37 @@ import SwiftUI
 @Observable
 final class UserPreferences {
     static let shared = UserPreferences()
-    
+
     var useMetric: Bool {
         didSet { UserDefaults.standard.set(useMetric, forKey: "useMetric") }
     }
-    
-    var defaultRestSeconds: Int {
-        didSet { UserDefaults.standard.set(defaultRestSeconds, forKey: "defaultRestSeconds") }
-    }
-    
+
     var hapticEnabled: Bool {
         didSet { UserDefaults.standard.set(hapticEnabled, forKey: "hapticEnabled") }
     }
-    
+
+    static let freeTemplateLimit = 3
+
     private init() {
-        self.useMetric = UserDefaults.standard.object(forKey: "useMetric") as? Bool ?? true
-        self.defaultRestSeconds = UserDefaults.standard.object(forKey: "defaultRestSeconds") as? Int ?? 90
+        self.useMetric     = UserDefaults.standard.object(forKey: "useMetric")     as? Bool ?? true
         self.hapticEnabled = UserDefaults.standard.object(forKey: "hapticEnabled") as? Bool ?? true
     }
-    
-    func formattedWeight(_ kg: Double) -> String {
-        if useMetric {
-            let val = kg.truncatingRemainder(dividingBy: 1) == 0
-                ? String(format: "%.0f", kg)
-                : String(format: "%.1f", kg)
-            return "\(val) kg"
-        } else {
-            let lbs = kg * 2.20462
-            let val = lbs.truncatingRemainder(dividingBy: 1) == 0
-                ? String(format: "%.0f", lbs)
-                : String(format: "%.1f", lbs)
-            return "\(val) lbs"
-        }
+
+    func displayWeight(_ kg: Double) -> Double {
+        useMetric ? kg : kg * 2.20462
     }
-    
+
+    func storageWeight(_ display: Double) -> Double {
+        useMetric ? display : display / 2.20462
+    }
+
+    func formatWeight(_ kg: Double) -> String {
+        let val = displayWeight(kg)
+        let s = val.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", val)
+            : String(format: "%.1f", val)
+        return "\(s) \(weightUnit)"
+    }
+
     var weightUnit: String { useMetric ? "kg" : "lbs" }
 }
