@@ -28,6 +28,10 @@ struct ContentView: View {
                     .tag(Tab.settings)
             }
             .toolbar(.hidden, for: .tabBar)
+            .toolbarBackground(.hidden, for: .tabBar)
+            .onAppear {
+                UITabBar.appearance().isHidden = true  // ← nuclear option
+            }
 
             TrackrTabBar(selectedTab: $selectedTab)
         }
