@@ -9,7 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var prefs = UserPreferences.shared
-    @State private var showingPro = false
+    @State private var showingPro     = false
+    @State private var showingPrivacy = false
 
     var body: some View {
         NavigationStack {
@@ -17,12 +18,14 @@ struct SettingsView: View {
                 TrackrDesign.Colors.background.ignoresSafeArea()
 
                 List {
+                    // Pro banner
                     Section {
                         ProBannerCell { showingPro = true }
                             .listRowBackground(Color.clear)
                             .listRowInsets(EdgeInsets())
                     }
 
+                    // Preferences
                     Section {
                         WeightUnitRow(useMetric: $prefs.useMetric)
                         ToggleRow(
@@ -37,26 +40,50 @@ struct SettingsView: View {
                     .listRowBackground(TrackrDesign.Colors.surface)
                     .listRowSeparatorTint(TrackrDesign.Colors.border)
 
+                    // Pro features teaser
                     Section {
-                        ProFeatureRow(icon: "timer",         title: "Rest Timer",          desc: "Auto-start after each set")
-                        ProFeatureRow(icon: "chart.bar",     title: "Advanced Analytics",  desc: "Volume, trends & more")
-                        ProFeatureRow(icon: "icloud",        title: "Cloud Sync",           desc: "Sync across your devices")
+                        ProFeatureRow(icon: "timer",      title: "Rest Timer",         desc: "Auto-start after each set")
+                        ProFeatureRow(icon: "chart.bar",  title: "Advanced Analytics", desc: "Volume, trends & more")
+                        ProFeatureRow(icon: "icloud",     title: "Cloud Sync",         desc: "Sync across your devices")
                     } header: {
                         sectionHeader("Trackr Pro Features")
                     }
                     .listRowBackground(TrackrDesign.Colors.surface)
                     .listRowSeparatorTint(TrackrDesign.Colors.border)
 
+                    // About
                     Section {
-                        IconRow(icon: "info.circle",  iconColor: TrackrDesign.Colors.textTertiary, title: "Version",        value: "1.0.0")
-                        Link(destination: URL(string: "https://trackrapp.com/privacy")!) {
-                            IconRow(icon: "lock.shield", iconColor: TrackrDesign.Colors.textTertiary, title: "Privacy Policy", value: "")
+                        IconRow(
+                            icon: "info.circle",
+                            iconColor: TrackrDesign.Colors.textTertiary,
+                            title: "Version",
+                            value: "1.0.0"
+                        )
+
+                        Button {
+                            showingPrivacy = true
+                        } label: {
+                            IconRow(
+                                icon: "lock.shield",
+                                iconColor: TrackrDesign.Colors.textTertiary,
+                                title: "Privacy Policy",
+                                value: ""
+                            )
                         }
+                        .buttonStyle(.plain)
                     } header: {
                         sectionHeader("About")
                     }
                     .listRowBackground(TrackrDesign.Colors.surface)
                     .listRowSeparatorTint(TrackrDesign.Colors.border)
+
+                    // Bottom spacer so last row clears the floating tab bar
+                    Section {
+                        Color.clear
+                            .frame(height: 80)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
                 }
                 .scrollContentBackground(.hidden)
                 .background(TrackrDesign.Colors.background)
@@ -65,9 +92,8 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(TrackrDesign.Colors.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .sheet(isPresented: $showingPro) {
-                TrackrProView()
-            }
+            .sheet(isPresented: $showingPro)     { TrackrProView() }
+            .sheet(isPresented: $showingPrivacy) { PrivacyPolicyView() }
         }
     }
 
@@ -77,6 +103,159 @@ struct SettingsView: View {
             .foregroundStyle(TrackrDesign.Colors.textTertiary)
             .textCase(nil)
             .padding(.bottom, 4)
+    }
+}
+
+// MARK: - Privacy Policy View
+struct PrivacyPolicyView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                TrackrDesign.Colors.background.ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 28) {
+
+                        // Header
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(TrackrDesign.Colors.accent.opacity(0.15))
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "lock.shield.fill")
+                                        .font(.system(size: 22, weight: .semibold))
+                                        .foregroundStyle(TrackrDesign.Colors.accent)
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Privacy Policy")
+                                        .font(TrackrDesign.Font.display(22))
+                                        .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                                    Text("Last updated June 2025")
+                                        .font(TrackrDesign.Font.body(13))
+                                        .foregroundStyle(TrackrDesign.Colors.textTertiary)
+                                }
+                            }
+
+                            // TL;DR badge
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(TrackrDesign.Colors.green)
+                                Text("Your data never leaves your device. Ever.")
+                                    .font(TrackrDesign.Font.body(14, weight: .semibold))
+                                    .foregroundStyle(TrackrDesign.Colors.green)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                                    .fill(TrackrDesign.Colors.greenDim)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                                            .stroke(TrackrDesign.Colors.green.opacity(0.25))
+                                    )
+                            )
+                        }
+
+                        policySection(
+                            icon: "iphone",
+                            title: "Data Storage",
+                            body: "All workout data — including your sessions, exercises, sets, reps, and templates — is stored exclusively on your device using Apple's SwiftData framework. Trackr has no servers and no database of its own."
+                        )
+
+                        policySection(
+                            icon: "wifi.slash",
+                            title: "No Internet Required",
+                            body: "Trackr works entirely offline. The app makes no network requests and does not transmit any information over the internet."
+                        )
+
+                        policySection(
+                            icon: "person.slash",
+                            title: "No Accounts",
+                            body: "Trackr does not require you to create an account, provide an email address, or share any personal information. You are anonymous to us by design."
+                        )
+
+                        policySection(
+                            icon: "eye.slash",
+                            title: "No Tracking or Analytics",
+                            body: "Trackr contains no analytics SDKs, crash reporters, ad networks, or third-party trackers of any kind. We do not know how often you use the app, what exercises you log, or anything else about your activity."
+                        )
+
+                        policySection(
+                            icon: "bell.slash",
+                            title: "No Notifications",
+                            body: "Trackr does not request notification permissions and will never send you push notifications."
+                        )
+
+                        policySection(
+                            icon: "trash",
+                            title: "Deleting Your Data",
+                            body: "Because all data is stored locally on your device, you can permanently delete all Trackr data at any time by deleting the app from your iPhone. No data remains on any server because no data was ever sent to one."
+                        )
+
+                        policySection(
+                            icon: "arrow.triangle.2.circlepath",
+                            title: "Future Changes",
+                            body: "If a future version of Trackr introduces optional cloud sync or account features, those features will be opt-in and this policy will be updated with clear notice before any such version is released."
+                        )
+
+                        policySection(
+                            icon: "envelope",
+                            title: "Contact",
+                            body: "Questions about this policy? Reach us at privacy@trackrapp.com"
+                        )
+
+                        // Bottom spacer
+                        Color.clear.frame(height: 20)
+                    }
+                    .padding(.horizontal, TrackrDesign.Spacing.md)
+                    .padding(.top, TrackrDesign.Spacing.md)
+                }
+            }
+            .navigationTitle("Privacy Policy")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .font(TrackrDesign.Font.body(16, weight: .semibold))
+                        .foregroundStyle(TrackrDesign.Colors.accent)
+                }
+            }
+            .toolbarBackground(TrackrDesign.Colors.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+
+    private func policySection(icon: String, title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(TrackrDesign.Colors.accent)
+                    .frame(width: 20)
+                Text(title)
+                    .font(TrackrDesign.Font.display(15))
+                    .foregroundStyle(TrackrDesign.Colors.textPrimary)
+            }
+            Text(body)
+                .font(TrackrDesign.Font.body(14))
+                .foregroundStyle(TrackrDesign.Colors.textSecondary)
+                .lineSpacing(5)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(TrackrDesign.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                .fill(TrackrDesign.Colors.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                        .stroke(TrackrDesign.Colors.border)
+                )
+        )
     }
 }
 
@@ -296,7 +475,10 @@ struct TrackrProView: View {
                             Spacer()
                         }
                         .padding(.vertical, 14)
-                        .overlay(Rectangle().fill(TrackrDesign.Colors.border).frame(height: 1), alignment: .bottom)
+                        .overlay(
+                            Rectangle().fill(TrackrDesign.Colors.border).frame(height: 1),
+                            alignment: .bottom
+                        )
                     }
                 }
                 .padding(.horizontal, TrackrDesign.Spacing.md)
