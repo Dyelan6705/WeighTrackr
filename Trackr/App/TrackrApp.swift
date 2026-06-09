@@ -35,6 +35,7 @@ struct TrackrApp: App {
             ContentView()
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
+                .environment(StoreKitManager.shared)
         }
     }
 

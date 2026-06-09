@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
     @State private var prefs = UserPreferences.shared
+    @Environment(StoreKitManager.self) private var store
     @State private var showingPro     = false
     @State private var showingPrivacy = false
 
@@ -368,17 +370,9 @@ struct ProBannerCell: View {
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("Trackr Pro")
-                            .font(TrackrDesign.Font.display(17))
-                            .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                        Text("COMING SOON")
-                            .font(TrackrDesign.Font.body(9, weight: .bold))
-                            .foregroundStyle(Color(hex: "F59E0B"))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(Color(hex: "F59E0B").opacity(0.15)))
-                    }
+                    Text("Trackr Pro")
+                        .font(TrackrDesign.Font.display(17))
+                        .foregroundStyle(TrackrDesign.Colors.textPrimary)
                     Text("Rest timer, analytics & more")
                         .font(TrackrDesign.Font.body(12))
                         .foregroundStyle(TrackrDesign.Colors.textSecondary)
@@ -409,11 +403,15 @@ struct ProBannerCell: View {
     }
 }
 
-// MARK: - Trackr Pro Sheet
+// MARK: - Trackr Pro Paywall
 struct TrackrProView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(StoreKitManager.self) private var store
 
-    let features: [(String, String, String)] = [
+    @State private var selectedProductID: String = TrackrProduct.yearly
+    @State private var isPurchasing = false
+
+    private let features: [(String, String, String)] = [
         ("timer",               "Rest Timer",          "Auto-start between every set"),
         ("chart.bar.xaxis",    "Advanced Analytics",  "Volume, 1RM estimates & trends"),
         ("paintbrush.fill",    "Custom Themes",       "Personalise your app look"),
@@ -426,6 +424,7 @@ struct TrackrProView: View {
             TrackrDesign.Colors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // Header
                 VStack(spacing: 16) {
                     ZStack {
                         Circle()
@@ -441,10 +440,12 @@ struct TrackrProView: View {
                     .shadow(color: Color(hex: "F59E0B").opacity(0.4), radius: 20, y: 8)
 
                     VStack(spacing: 6) {
-                        Text("Trackr Pro")
+                        Text(store.isPro ? "You're Pro!" : "Trackr Pro")
                             .font(TrackrDesign.Font.display(30))
                             .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                        Text("Coming soon — leave your email to be first.")
+                        Text(store.isPro
+                             ? "Thanks for supporting Trackr."
+                             : "Unlock all features, forever.")
                             .font(TrackrDesign.Font.body(15))
                             .foregroundStyle(TrackrDesign.Colors.textSecondary)
                             .multilineTextAlignment(.center)
@@ -453,6 +454,7 @@ struct TrackrProView: View {
                 .padding(.top, 48)
                 .padding(.horizontal, TrackrDesign.Spacing.xl)
 
+                // Feature list
                 VStack(spacing: 0) {
                     ForEach(features, id: \.0) { icon, title, desc in
                         HStack(spacing: 16) {
@@ -475,10 +477,7 @@ struct TrackrProView: View {
                             Spacer()
                         }
                         .padding(.vertical, 14)
-                        .overlay(
-                            Rectangle().fill(TrackrDesign.Colors.border).frame(height: 1),
-                            alignment: .bottom
-                        )
+                        .overlay(Rectangle().fill(TrackrDesign.Colors.border).frame(height: 1), alignment: .bottom)
                     }
                 }
                 .padding(.horizontal, TrackrDesign.Spacing.md)
@@ -486,11 +485,70 @@ struct TrackrProView: View {
 
                 Spacer()
 
-                VStack(spacing: 12) {
-                    Button { dismiss() } label: {
-                        Text("Notify Me at Launch")
-                            .font(TrackrDesign.Font.display(17))
-                            .foregroundStyle(.white)
+                if store.isPro {
+                    // Already subscribed
+                    Button("Done") { dismiss() }
+                        .font(TrackrDesign.Font.display(17))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                        .background(
+                            RoundedRectangle(cornerRadius: TrackrDesign.Radius.lg)
+                                .fill(LinearGradient(
+                                    colors: [Color(hex: "F59E0B"), Color(hex: "EF4444")],
+                                    startPoint: .leading, endPoint: .trailing
+                                ))
+                        )
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, TrackrDesign.Spacing.md)
+                        .padding(.bottom, 40)
+                } else {
+                    // Plan picker + buy button
+                    VStack(spacing: 16) {
+                        // Plan selector
+                        if store.isLoading {
+                            ProgressView()
+                                .tint(Color(hex: "F59E0B"))
+                                .frame(height: 88)
+                        } else {
+                            HStack(spacing: 12) {
+                                planCard(
+                                    product: store.yearlyProduct,
+                                    label: "Yearly",
+                                    badge: "BEST VALUE",
+                                    id: TrackrProduct.yearly
+                                )
+                                planCard(
+                                    product: store.lifetimeProduct,
+                                    label: "Lifetime",
+                                    badge: nil,
+                                    id: TrackrProduct.lifetime
+                                )
+                            }
+                        }
+
+                        // Error
+                        if let error = store.purchaseError {
+                            Text(error)
+                                .font(TrackrDesign.Font.body(13))
+                                .foregroundStyle(TrackrDesign.Colors.red)
+                                .multilineTextAlignment(.center)
+                        }
+
+                        // CTA
+                        Button {
+                            Task { await buySelected() }
+                        } label: {
+                            Group {
+                                if isPurchasing {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Text(ctaLabel)
+                                        .font(TrackrDesign.Font.display(17))
+                                        .foregroundStyle(.white)
+                                }
+                            }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 18)
                             .background(
@@ -500,17 +558,104 @@ struct TrackrProView: View {
                                         startPoint: .leading, endPoint: .trailing
                                     ))
                             )
-                    }
-                    .buttonStyle(.plain)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isPurchasing || store.isLoading)
 
-                    Button("Not Now") { dismiss() }
-                        .font(TrackrDesign.Font.body(15))
-                        .foregroundStyle(TrackrDesign.Colors.textSecondary)
+                        HStack(spacing: 16) {
+                            Button("Restore") {
+                                Task {
+                                    isPurchasing = true
+                                    await store.restore()
+                                    isPurchasing = false
+                                    if store.isPro { dismiss() }
+                                }
+                            }
+                            .font(TrackrDesign.Font.body(13))
+                            .foregroundStyle(TrackrDesign.Colors.textTertiary)
+
+                            Button("Not Now") { dismiss() }
+                                .font(TrackrDesign.Font.body(13))
+                                .foregroundStyle(TrackrDesign.Colors.textTertiary)
+                        }
+                    }
+                    .padding(.horizontal, TrackrDesign.Spacing.md)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, TrackrDesign.Spacing.md)
-                .padding(.bottom, 40)
             }
         }
+        .task { await store.loadProducts() }
+    }
+
+    // MARK: - Helpers
+
+    private var ctaLabel: String {
+        let product = selectedProductID == TrackrProduct.lifetime
+            ? store.lifetimeProduct
+            : store.yearlyProduct
+        if let p = product {
+            return "Get \(p.displayName) — \(p.displayPrice)"
+        }
+        return "Continue"
+    }
+
+    private func buySelected() async {
+        guard let product = selectedProductID == TrackrProduct.lifetime
+                ? store.lifetimeProduct
+                : store.yearlyProduct
+        else { return }
+        isPurchasing = true
+        await store.purchase(product)
+        isPurchasing = false
+        if store.isPro { dismiss() }
+    }
+
+    @ViewBuilder
+    private func planCard(product: Product?, label: String, badge: String?, id: String) -> some View {
+        let selected = selectedProductID == id
+        Button { selectedProductID = id } label: {
+            VStack(spacing: 6) {
+                if let badge {
+                    Text(badge)
+                        .font(TrackrDesign.Font.body(9, weight: .bold))
+                        .foregroundStyle(Color(hex: "F59E0B"))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color(hex: "F59E0B").opacity(0.15)))
+                } else {
+                    Spacer().frame(height: 20)
+                }
+                Text(label)
+                    .font(TrackrDesign.Font.body(14, weight: .semibold))
+                    .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                if let p = product {
+                    Text(p.displayPrice)
+                        .font(TrackrDesign.Font.display(22))
+                        .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                    Text(id == TrackrProduct.yearly ? "/ year" : "one-time")
+                        .font(TrackrDesign.Font.body(12))
+                        .foregroundStyle(TrackrDesign.Colors.textSecondary)
+                } else {
+                    ProgressView().tint(Color(hex: "F59E0B"))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                    .fill(selected
+                          ? Color(hex: "F59E0B").opacity(0.12)
+                          : TrackrDesign.Colors.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                            .stroke(selected
+                                    ? Color(hex: "F59E0B").opacity(0.6)
+                                    : TrackrDesign.Colors.border,
+                                    lineWidth: selected ? 1.5 : 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
