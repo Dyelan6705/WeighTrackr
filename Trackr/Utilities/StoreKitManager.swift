@@ -10,8 +10,8 @@ import SwiftUI
 
 // Product IDs — must match exactly what you create in App Store Connect
 enum TrackrProduct {
-    static let lifetime = "com.trackrapp.pro.lifetime"
-    static let yearly   = "com.trackrapp.pro.yearly"
+    static let lifetime = "com.Choukalos.Trackr.lifetime"
+    static let yearly   = "com.Choukalos.Trackr.yearly"
     static let all      = [lifetime, yearly]
 }
 
