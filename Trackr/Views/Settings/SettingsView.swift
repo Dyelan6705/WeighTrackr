@@ -506,25 +506,21 @@ struct TrackrProView: View {
                     // Plan picker + buy button
                     VStack(spacing: 16) {
                         // Plan selector
-                        if store.isLoading {
-                            ProgressView()
-                                .tint(Color(hex: "F59E0B"))
-                                .frame(height: 88)
-                        } else {
-                            HStack(spacing: 12) {
-                                planCard(
-                                    product: store.yearlyProduct,
-                                    label: "Yearly",
-                                    badge: "BEST VALUE",
-                                    id: TrackrProduct.yearly
-                                )
-                                planCard(
-                                    product: store.lifetimeProduct,
-                                    label: "Lifetime",
-                                    badge: nil,
-                                    id: TrackrProduct.lifetime
-                                )
-                            }
+                        HStack(spacing: 12) {
+                            planCard(
+                                product: store.yearlyProduct,
+                                label: "Yearly",
+                                price: store.yearlyProduct?.displayPrice ?? "$4.99",
+                                period: "/ year",
+                                id: TrackrProduct.yearly
+                            )
+                            planCard(
+                                product: store.lifetimeProduct,
+                                label: "Lifetime",
+                                price: store.lifetimeProduct?.displayPrice ?? "$9.99",
+                                period: "one-time",
+                                id: TrackrProduct.lifetime
+                            )
                         }
 
                         // Error
@@ -601,13 +597,10 @@ struct TrackrProView: View {
     // MARK: - Helpers
 
     private var ctaLabel: String {
-        let product = selectedProductID == TrackrProduct.lifetime
-            ? store.lifetimeProduct
-            : store.yearlyProduct
-        if let p = product {
-            return "Get \(p.displayName) — \(p.displayPrice)"
+        if selectedProductID == TrackrProduct.lifetime {
+            return "Get Lifetime — \(store.lifetimeProduct?.displayPrice ?? "$9.99")"
         }
-        return "Continue"
+        return "Get Yearly — \(store.yearlyProduct?.displayPrice ?? "$4.99")"
     }
 
     private func buySelected() async {
@@ -622,33 +615,19 @@ struct TrackrProView: View {
     }
 
     @ViewBuilder
-    private func planCard(product: Product?, label: String, badge: String?, id: String) -> some View {
+    private func planCard(product: Product?, label: String, price: String, period: String, id: String) -> some View {
         let selected = selectedProductID == id
         Button { selectedProductID = id } label: {
             VStack(spacing: 6) {
-                if let badge {
-                    Text(badge)
-                        .font(TrackrDesign.Font.body(9, weight: .bold))
-                        .foregroundStyle(Color(hex: "F59E0B"))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(Color(hex: "F59E0B").opacity(0.15)))
-                } else {
-                    Spacer().frame(height: 20)
-                }
                 Text(label)
                     .font(TrackrDesign.Font.body(14, weight: .semibold))
                     .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                if let p = product {
-                    Text(p.displayPrice)
-                        .font(TrackrDesign.Font.display(22))
-                        .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                    Text(id == TrackrProduct.yearly ? "/ year" : "one-time")
-                        .font(TrackrDesign.Font.body(12))
-                        .foregroundStyle(TrackrDesign.Colors.textSecondary)
-                } else {
-                    ProgressView().tint(Color(hex: "F59E0B"))
-                }
+                Text(price)
+                    .font(TrackrDesign.Font.display(22))
+                    .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                Text(period)
+                    .font(TrackrDesign.Font.body(12))
+                    .foregroundStyle(TrackrDesign.Colors.textSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
