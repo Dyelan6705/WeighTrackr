@@ -510,7 +510,7 @@ struct TrackrProView: View {
                             planCard(
                                 product: store.yearlyProduct,
                                 label: "Yearly",
-                                price: store.yearlyProduct?.displayPrice ?? "$4.99",
+                                price: store.yearlyProduct?.displayPrice ?? "$2.99",
                                 period: "/ year",
                                 id: TrackrProduct.yearly
                             )
@@ -600,7 +600,7 @@ struct TrackrProView: View {
         if selectedProductID == TrackrProduct.lifetime {
             return "Get Lifetime — \(store.lifetimeProduct?.displayPrice ?? "$9.99")"
         }
-        return "Get Yearly — \(store.yearlyProduct?.displayPrice ?? "$4.99")"
+        return "Get Yearly — \(store.yearlyProduct?.displayPrice ?? "$2.99")"
     }
 
     private func buySelected() async {
