@@ -565,7 +565,7 @@ struct TrackrProView: View {
                         // Legal links
                         HStack(spacing: 4) {
                             Link("Privacy Policy",
-                                 destination: URL(string: "https://gist.githubusercontent.com/Dyelan6705/raw/privacy-policy.md")!)
+                                 destination: URL(string: "https://gist.githubusercontent.com/Dyelan6705/8ede506a7cc2d4a88f2a40271ca3271d/raw/privacy-policy.md")!)
                             Text("·")
                             Link("Terms of Use",
                                  destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
