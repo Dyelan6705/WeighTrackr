@@ -562,6 +562,17 @@ struct TrackrProView: View {
                         .buttonStyle(.plain)
                         .disabled(isPurchasing || store.isLoading)
 
+                        // Legal links
+                        HStack(spacing: 4) {
+                            Link("Privacy Policy",
+                                 destination: URL(string: "https://gist.githubusercontent.com/Dyelan6705/raw/privacy-policy.md")!)
+                            Text("·")
+                            Link("Terms of Use",
+                                 destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                        }
+                        .font(TrackrDesign.Font.body(11))
+                        .foregroundStyle(TrackrDesign.Colors.textTertiary)
+
                         HStack(spacing: 16) {
                             Button("Restore") {
                                 Task {
