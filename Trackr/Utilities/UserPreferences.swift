@@ -21,6 +21,7 @@ final class UserPreferences {
     }
 
     static let freeTemplateLimit = 3
+    static let freeExerciseLimit = 10
 
     private init() {
         self.useMetric     = UserDefaults.standard.object(forKey: "useMetric")     as? Bool ?? true

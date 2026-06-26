@@ -179,18 +179,26 @@ final class TemplateExercise {
     var name: String
     var targetSets: Int
     var targetReps: Int
+    var targetRepsMax: Int  // > 0 means rep range is active (Pro)
     var targetWeight: Double
     var orderIndex: Int
     var muscleGroup: String
     var restSeconds: Int
-    
+
     var template: WorkoutTemplate?
-    
-    init(name: String, targetSets: Int = 3, targetReps: Int = 10, targetWeight: Double = 0, orderIndex: Int = 0, muscleGroup: String = "") {
+
+    var useRepRange: Bool { targetRepsMax > 0 }
+
+    var repsDisplay: String {
+        useRepRange ? "\(targetReps)–\(targetRepsMax)" : "\(targetReps)"
+    }
+
+    init(name: String, targetSets: Int = 3, targetReps: Int = 10, targetRepsMax: Int = 0, targetWeight: Double = 0, orderIndex: Int = 0, muscleGroup: String = "") {
         self.id = UUID()
         self.name = name
         self.targetSets = targetSets
         self.targetReps = targetReps
+        self.targetRepsMax = targetRepsMax
         self.targetWeight = targetWeight
         self.orderIndex = orderIndex
         self.muscleGroup = muscleGroup
