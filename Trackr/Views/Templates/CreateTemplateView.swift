@@ -163,7 +163,7 @@ struct EditTemplateView: View {
                             .listRowBackground(TrackrDesign.Colors.surface)
                     }
 
-                    Section("Exercises") {
+                    Section("Exercises — drag to reorder") {
                         ForEach(template.sortedExercises) { exercise in
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -205,17 +205,15 @@ struct EditTemplateView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .background(TrackrDesign.Colors.background)
+                .environment(\.editMode, .constant(.active))
             }
             .navigationTitle("Edit Template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(TrackrDesign.Colors.accent)
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                        .foregroundStyle(TrackrDesign.Colors.textSecondary)
+                    Button("Done") { dismiss() }
+                        .font(TrackrDesign.Font.body(16, weight: .semibold))
+                        .foregroundStyle(TrackrDesign.Colors.accent)
                 }
             }
             .sheet(isPresented: $showingExercisePicker) {
