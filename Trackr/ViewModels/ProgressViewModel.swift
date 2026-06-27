@@ -120,11 +120,25 @@ struct PersonalRecord: Identifiable {
     let weight: Double
     let reps: Int
     let date: Date
-    
+
     var formattedWeight: String {
         weight.truncatingRemainder(dividingBy: 1) == 0
             ? String(format: "%.0f", weight)
             : String(format: "%.1f", weight)
+    }
+
+    // Epley formula — reliable up to ~10 reps
+    var estimatedOneRepMax: Double {
+        guard reps > 0 else { return weight }
+        if reps == 1 { return weight }
+        return weight * (1 + Double(reps) / 30.0)
+    }
+
+    var formatted1RM: String {
+        let v = estimatedOneRepMax
+        return v.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", v)
+            : String(format: "%.1f", v)
     }
 }
 

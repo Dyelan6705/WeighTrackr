@@ -22,6 +22,7 @@ struct TrackrProgressView: View {
                     VStack(spacing: TrackrDesign.Spacing.md) {
                         statsSummary
                         chartSection
+                        oneRepMaxSection
                         personalRecordsSection
                         Spacer(minLength: 100)
                     }
@@ -204,6 +205,78 @@ struct TrackrProgressView: View {
         }
     }
     
+    // MARK: - 1RM Estimator
+    private var oneRepMaxSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Estimated 1RM")
+                    .font(TrackrDesign.Font.display(17))
+                    .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                Text("Based on your best set per exercise (Epley formula)")
+                    .font(TrackrDesign.Font.body(12))
+                    .foregroundStyle(TrackrDesign.Colors.textTertiary)
+            }
+
+            let prefs = UserPreferences.shared
+            if viewModel.personalRecords.isEmpty {
+                EmptyStateCard(
+                    icon: "scalemass",
+                    message: "Complete workouts to\nsee estimated 1RMs."
+                )
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(viewModel.personalRecords) { pr in
+                        let est = prefs.useMetric
+                            ? pr.estimatedOneRepMax
+                            : pr.estimatedOneRepMax * 2.20462
+                        let actual = prefs.useMetric ? pr.weight : pr.weight * 2.20462
+
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(TrackrDesign.Colors.accent.opacity(0.12))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "scalemass.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(TrackrDesign.Colors.accent)
+                            }
+
+                            Text(pr.exerciseName)
+                                .font(TrackrDesign.Font.body(14, weight: .semibold))
+                                .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 2) {
+                                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                                    Text(est.truncatingRemainder(dividingBy: 1) == 0
+                                         ? String(format: "%.0f", est)
+                                         : String(format: "%.1f", est))
+                                        .font(TrackrDesign.Font.mono(16, weight: .bold))
+                                        .foregroundStyle(TrackrDesign.Colors.textPrimary)
+                                    Text(prefs.weightUnit)
+                                        .font(TrackrDesign.Font.body(11))
+                                        .foregroundStyle(TrackrDesign.Colors.textTertiary)
+                                }
+                                Text("from \(actual.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", actual) : String(format: "%.1f", actual)) × \(pr.reps)")
+                                    .font(TrackrDesign.Font.body(11))
+                                    .foregroundStyle(TrackrDesign.Colors.textTertiary)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
+                                .fill(TrackrDesign.Colors.surface)
+                                .overlay(RoundedRectangle(cornerRadius: TrackrDesign.Radius.md).stroke(TrackrDesign.Colors.border))
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Personal Records
     private var personalRecordsSection: some View {
         VStack(alignment: .leading, spacing: 12) {

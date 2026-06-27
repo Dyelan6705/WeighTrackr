@@ -10,7 +10,6 @@ import SwiftData
 
 struct WorkoutLoggingView: View {
     @Environment(\.modelContext) private var context
-    @Environment(StoreKitManager.self) private var store
 
     let workout: WorkoutSession
     let onFinish: () -> Void
@@ -27,8 +26,10 @@ struct WorkoutLoggingView: View {
         _viewModel    = State(initialValue: WorkoutViewModel(workout: workout))
     }
 
+    private var isPro: Bool { StoreKitManager.shared.isPro }
+    private var exerciseCount: Int { viewModel.sortedExercises.count }
     private var atExerciseLimit: Bool {
-        !store.isPro && viewModel.sortedExercises.count >= UserPreferences.freeExerciseLimit
+        !isPro && exerciseCount >= UserPreferences.freeExerciseLimit
     }
 
     var body: some View {
@@ -71,7 +72,7 @@ struct WorkoutLoggingView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingPro) { TrackrProView() }
+        .sheet(isPresented: $showingPro) { TrackrProView().environment(StoreKitManager.shared) }
         .alert("Discard Workout?", isPresented: $showingDiscardAlert) {
             Button("Discard", role: .destructive) {
                 viewModel.discardWorkout(context: context)
@@ -159,45 +160,56 @@ struct WorkoutLoggingView: View {
 
     // MARK: - Add Exercise
     private var addExerciseButton: some View {
-        Button {
-            if atExerciseLimit {
-                showingPro = true
-            } else {
-                showingExercisePicker = true
+        VStack(spacing: 8) {
+            // Counter for free users
+            if !isPro {
+                let remaining = UserPreferences.freeExerciseLimit - exerciseCount
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(remaining > 0
+                         ? "\(remaining) of \(UserPreferences.freeExerciseLimit) free exercises remaining"
+                         : "Exercise limit reached — upgrade to add more")
+                        .font(TrackrDesign.Font.body(12))
+                }
+                .foregroundStyle(remaining <= 2
+                                 ? Color(hex: "F59E0B")
+                                 : TrackrDesign.Colors.textTertiary)
             }
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: atExerciseLimit ? "crown.fill" : "plus.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(atExerciseLimit ? Color(hex: "F59E0B") : TrackrDesign.Colors.accent)
-                VStack(spacing: 1) {
-                    Text(atExerciseLimit ? "Upgrade to Add More" : "Add Exercise")
+
+            Button {
+                if atExerciseLimit {
+                    showingPro = true
+                } else {
+                    showingExercisePicker = true
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: atExerciseLimit ? "crown.fill" : "plus.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(atExerciseLimit ? Color(hex: "F59E0B") : TrackrDesign.Colors.accent)
+                    Text(atExerciseLimit ? "Upgrade for Unlimited Exercises" : "Add Exercise")
                         .font(TrackrDesign.Font.body(15, weight: .semibold))
                         .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                    if atExerciseLimit {
-                        Text("Free plan: \(UserPreferences.freeExerciseLimit) exercises per workout")
-                            .font(TrackrDesign.Font.body(11))
-                            .foregroundStyle(TrackrDesign.Colors.textTertiary)
-                    }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: TrackrDesign.Radius.lg)
+                        .fill(TrackrDesign.Colors.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: TrackrDesign.Radius.lg)
+                                .strokeBorder(
+                                    atExerciseLimit
+                                        ? Color(hex: "F59E0B").opacity(0.4)
+                                        : TrackrDesign.Colors.accent.opacity(0.35),
+                                    style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                                )
+                        )
+                )
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(
-                RoundedRectangle(cornerRadius: TrackrDesign.Radius.lg)
-                    .fill(TrackrDesign.Colors.surface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: TrackrDesign.Radius.lg)
-                            .strokeBorder(
-                                atExerciseLimit
-                                    ? Color(hex: "F59E0B").opacity(0.4)
-                                    : TrackrDesign.Colors.accent.opacity(0.35),
-                                style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
-                            )
-                    )
-            )
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Finish Bar
