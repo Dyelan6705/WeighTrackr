@@ -205,3 +205,21 @@ final class TemplateExercise {
         self.restSeconds = 90
     }
 }
+
+// MARK: - CustomExercise
+@Model
+final class CustomExercise {
+    var id: UUID
+    var name: String
+    var category: String
+    var muscleGroup: String
+    var createdAt: Date
+
+    init(name: String, category: String = "Custom", muscleGroup: String = "") {
+        self.id = UUID()
+        self.name = name
+        self.category = category
+        self.muscleGroup = muscleGroup
+        self.createdAt = Date()
+    }
+}

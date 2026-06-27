@@ -21,7 +21,8 @@ struct TrackrApp: App {
                 Exercise.self,
                 WorkoutSet.self,
                 WorkoutTemplate.self,
-                TemplateExercise.self
+                TemplateExercise.self,
+                CustomExercise.self
             ])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, configurations: config)

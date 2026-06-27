@@ -20,8 +20,8 @@ final class UserPreferences {
         didSet { UserDefaults.standard.set(hapticEnabled, forKey: "hapticEnabled") }
     }
 
-    static let freeTemplateLimit = 3
-    static let freeExerciseLimit = 10
+    static let freeTemplateLimit       = 3
+    static let freeCustomExerciseLimit = 10
 
     private init() {
         self.useMetric     = UserDefaults.standard.object(forKey: "useMetric")     as? Bool ?? true
