@@ -46,7 +46,8 @@ struct WorkoutLoggingView: View {
                                 exercise: exercise,
                                 viewModel: viewModel,
                                 onAddSet: { viewModel.addSet(to: exercise, context: context) },
-                                onDelete: { viewModel.removeExercise(exercise, context: context) }
+                                onDelete: { viewModel.removeExercise(exercise, context: context) },
+                                suggestion: viewModel.progressionSuggestions[exercise.name]
                             )
                         }
 
@@ -73,6 +74,7 @@ struct WorkoutLoggingView: View {
             }
         }
         .sheet(isPresented: $showingPro) { TrackrProView().environment(StoreKitManager.shared) }
+        .onAppear { viewModel.loadProgressionSuggestions(context: context) }
         .alert("Discard Workout?", isPresented: $showingDiscardAlert) {
             Button("Discard", role: .destructive) {
                 viewModel.discardWorkout(context: context)

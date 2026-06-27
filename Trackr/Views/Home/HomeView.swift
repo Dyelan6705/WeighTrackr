@@ -188,20 +188,20 @@ struct HomeView: View {
             }
         }
     }
-    
+
     // MARK: - Actions
     private func startBlankWorkout() {
         let session = viewModel.startNewWorkout(context: context)
         activeWorkout = session
         showingWorkout = true
     }
-    
+
     private func startFromTemplate(_ template: WorkoutTemplate) {
         let session = viewModel.startWorkoutFromTemplate(template, context: context)
         activeWorkout = session
         showingWorkout = true
     }
-    
+
     private var greetingText: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -212,6 +212,7 @@ struct HomeView: View {
         }
     }
 }
+
 
 // MARK: - Quick Template Chip
 struct QuickTemplateChip: View {
@@ -247,10 +248,10 @@ struct QuickTemplateChip: View {
 // MARK: - Recent Workout Row
 struct RecentWorkoutRow: View {
     let workout: WorkoutSession
-    
+    @State private var showingEdit = false
+
     var body: some View {
         HStack(spacing: 14) {
-            // Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(TrackrDesign.Colors.accentGlow)
@@ -259,12 +260,12 @@ struct RecentWorkoutRow: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(TrackrDesign.Colors.accentLight)
             }
-            
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(workout.name)
                     .font(TrackrDesign.Font.body(15, weight: .semibold))
                     .foregroundStyle(TrackrDesign.Colors.textPrimary)
-                
+
                 HStack(spacing: 10) {
                     Label(workout.durationFormatted, systemImage: "clock")
                     Label("\(workout.exercises.count) exercises", systemImage: "list.bullet")
@@ -274,24 +275,37 @@ struct RecentWorkoutRow: View {
                 .foregroundStyle(TrackrDesign.Colors.textSecondary)
                 .labelStyle(.titleAndIcon)
             }
-            
+
             Spacer()
-            
-            Text(relativeDate(workout.startDate))
-                .font(TrackrDesign.Font.body(12))
-                .foregroundStyle(TrackrDesign.Colors.textTertiary)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(relativeDate(workout.startDate))
+                    .font(TrackrDesign.Font.body(12))
+                    .foregroundStyle(TrackrDesign.Colors.textTertiary)
+
+                if EditWorkoutView.canEdit(workout) {
+                    Button { showingEdit = true } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(TrackrDesign.Colors.accent)
+                            .padding(6)
+                            .background(Circle().fill(TrackrDesign.Colors.accentGlow))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
                 .fill(TrackrDesign.Colors.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: TrackrDesign.Radius.md)
-                        .stroke(TrackrDesign.Colors.border)
-                )
+                .overlay(RoundedRectangle(cornerRadius: TrackrDesign.Radius.md).stroke(TrackrDesign.Colors.border))
         )
+        .sheet(isPresented: $showingEdit) {
+            EditWorkoutView(workout: workout)
+        }
     }
-    
+
     private func relativeDate(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) { return "Today" }

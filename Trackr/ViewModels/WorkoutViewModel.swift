@@ -9,18 +9,59 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+struct ProgressionSuggestion {
+    let lastWeight: Double
+    let lastReps: Int
+    let lastSets: Int
+    let allCompleted: Bool
+
+    var suggestedWeight: Double {
+        allCompleted ? lastWeight + 2.5 : lastWeight
+    }
+}
+
 @Observable
 final class WorkoutViewModel {
     var workout: WorkoutSession
     var elapsedTime: TimeInterval = 0
     var showingAddExercise = false
     var selectedExercise: Exercise?
+    var progressionSuggestions: [String: ProgressionSuggestion] = [:]
 
     private var timer: Timer?
 
     init(workout: WorkoutSession) {
         self.workout = workout
         startTimer()
+    }
+
+    func loadProgressionSuggestions(context: ModelContext) {
+        let workoutID = workout.id
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.endDate != nil },
+            sortBy: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        let previous = (try? context.fetch(descriptor)) ?? []
+        let exerciseNames = Set(workout.exercises.map(\.name))
+        var suggestions: [String: ProgressionSuggestion] = [:]
+
+        for session in previous {
+            guard session.id != workoutID else { continue }
+            for exercise in session.exercises where exerciseNames.contains(exercise.name) {
+                guard suggestions[exercise.name] == nil else { continue }
+                let completed = exercise.sets.filter(\.isCompleted)
+                guard !completed.isEmpty else { continue }
+                let best = completed.max(by: { $0.weight < $1.weight }) ?? completed[0]
+                suggestions[exercise.name] = ProgressionSuggestion(
+                    lastWeight: best.weight,
+                    lastReps: best.reps,
+                    lastSets: exercise.sets.count,
+                    allCompleted: completed.count == exercise.sets.count
+                )
+            }
+            if suggestions.count == exerciseNames.count { break }
+        }
+        progressionSuggestions = suggestions
     }
 
     deinit {

@@ -13,6 +13,7 @@ struct ExerciseCard: View {
     let viewModel: WorkoutViewModel
     let onAddSet: () -> Void
     let onDelete: () -> Void
+    var suggestion: ProgressionSuggestion? = nil
 
     @State private var prefs = UserPreferences.shared
     @State private var isExpanded = true
@@ -23,6 +24,9 @@ struct ExerciseCard: View {
 
             if isExpanded {
                 VStack(spacing: 0) {
+                    if let s = suggestion {
+                        suggestionBanner(s)
+                    }
                     columnHeaders
 
                     ForEach(exercise.sortedSets) { set in
@@ -102,6 +106,37 @@ struct ExerciseCard: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
+    }
+
+    // MARK: - Suggestion Banner
+    private func suggestionBanner(_ s: ProgressionSuggestion) -> some View {
+        let lastW  = prefs.useMetric ? s.lastWeight  : s.lastWeight  * 2.20462
+        let sugW   = prefs.useMetric ? s.suggestedWeight : s.suggestedWeight * 2.20462
+        let unit   = prefs.weightUnit
+        let lastFmt = lastW.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", lastW) : String(format: "%.1f", lastW)
+        let sugFmt  = sugW.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", sugW)  : String(format: "%.1f", sugW)
+
+        return HStack(spacing: 8) {
+            Image(systemName: s.allCompleted ? "arrow.up.circle.fill" : "equal.circle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(s.allCompleted ? TrackrDesign.Colors.green : TrackrDesign.Colors.textTertiary)
+            Text("Last: \(s.lastSets)×\(s.lastReps) @ \(lastFmt)\(unit)")
+                .foregroundStyle(TrackrDesign.Colors.textSecondary)
+            if s.allCompleted {
+                Text("→ Try \(sugFmt)\(unit)")
+                    .foregroundStyle(TrackrDesign.Colors.green)
+                    .fontWeight(.semibold)
+            }
+            Spacer()
+        }
+        .font(TrackrDesign.Font.body(12))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(s.allCompleted
+                    ? TrackrDesign.Colors.greenDim
+                    : TrackrDesign.Colors.surfaceElevated)
     }
 
     // MARK: - Column Headers
